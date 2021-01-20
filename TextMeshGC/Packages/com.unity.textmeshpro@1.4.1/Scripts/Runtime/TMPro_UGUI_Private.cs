@@ -16,15 +16,31 @@ namespace TMPro
 
     public partial class TextMeshProUGUI
     {
+        public TextMeshProUGUI()
+        {
+#if TMP_USE_POOL
+
+            m_subTextObjects = TMP_ArrayPool<TMP_SubMeshUI>.Get(8);
+
+            m_RectTransformCorners = TMP_ArrayPool<Vector3>.Get(4);
+
+#else
+
+            m_subTextObjects = new TMP_SubMeshUI[8];
+
+            m_RectTransformCorners = new Vector3[4];
+#endif
+        }
+
         [SerializeField]
         private bool m_hasFontAssetChanged = false; // Used to track when font properties have changed.
 
         [SerializeField]
-        protected TMP_SubMeshUI[] m_subTextObjects = new TMP_SubMeshUI[8];
+        protected TMP_SubMeshUI[] m_subTextObjects;
 
         private float m_previousLossyScaleY = -1; // Used for Tracking lossy scale changes in the transform;
 
-        private Vector3[] m_RectTransformCorners = new Vector3[4];
+        private Vector3[] m_RectTransformCorners;
         private CanvasRenderer m_canvasRenderer;
         private Canvas m_canvas;
 
@@ -232,11 +248,13 @@ namespace TMPro
         {
             //Debug.Log("***** OnDestroy() called on object ID " + GetInstanceID() + ". *****");
 
-            if(m_textInfo !=null)
+#if TMP_USE_POOL
+            if (m_textInfo != null)
             {
                 m_textInfo.Release();
             }
             Release();
+#endif
 
             // UnRegister Graphic Component
             GraphicRegistry.UnregisterGraphicForCanvas(m_canvas, this);
@@ -1086,7 +1104,7 @@ namespace TMPro
                 int unicode = chars[i].unicode;
 
                 // PARSE XML TAGS
-                #region PARSE XML TAGS
+#region PARSE XML TAGS
                 if (m_isRichText && unicode == 60) // if Char '<'
                 {
                     int prev_MaterialIndex = m_currentMaterialIndex;
@@ -1125,7 +1143,7 @@ namespace TMPro
                         continue;
                     }
                 }
-                #endregion
+#endregion
 
                 bool isUsingAlternativeTypeface = false;
                 bool isUsingFallbackOrAlternativeTypeface = false;
@@ -1138,7 +1156,7 @@ namespace TMPro
 
 
                 // Handle Font Styles like LowerCase, UpperCase and SmallCaps.
-                #region Handling of LowerCase, UpperCase and SmallCaps Font Styles
+#region Handling of LowerCase, UpperCase and SmallCaps Font Styles
                 if (m_textElementType == TMP_TextElementType.Character)
                 {
                     if ((m_FontStyleInternal & FontStyles.UpperCase) == FontStyles.UpperCase)
@@ -1161,11 +1179,11 @@ namespace TMPro
                             unicode = char.ToUpper((char)unicode);
                     }
                 }
-                #endregion
+#endregion
 
 
                 // Lookup the Glyph data for each character and cache it.
-                #region LOOKUP GLYPH
+#region LOOKUP GLYPH
                 character = TMP_FontAssetUtilities.GetCharacterFromFontAsset((uint)unicode, m_currentFontAsset, false, m_FontStyleInternal, m_FontWeightInternal, out isUsingAlternativeTypeface, out tempFontAsset);
 
                 // Search for the glyph in the list of fallback assigned to the primary font asset.
@@ -1333,7 +1351,7 @@ namespace TMPro
                         m_currentFontAsset = tempFontAsset;
                     }
                 }
-                #endregion
+#endregion
 
 
                 m_textInfo.characterInfo[m_totalCharacterCount].elementType = TMP_TextElementType.Character;
@@ -1862,7 +1880,7 @@ namespace TMPro
                 charCode = m_TextParsingBuffer[i].unicode;
 
                 // Parse Rich Text Tag
-                #region Parse Rich Text Tag
+#region Parse Rich Text Tag
                 if (m_isRichText && charCode == 60)  // '<'
                 {
                     m_isParsingText = true;
@@ -1885,7 +1903,7 @@ namespace TMPro
                     m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
                     m_currentFontAsset = m_textInfo.characterInfo[m_characterCount].fontAsset;
                 }
-                #endregion End Parse Rich Text Tag
+#endregion End Parse Rich Text Tag
 
                 int prev_MaterialIndex = m_currentMaterialIndex;
                 bool isUsingAltTypeface = m_textInfo.characterInfo[m_characterCount].isUsingAlternateTypeface;
@@ -1902,7 +1920,7 @@ namespace TMPro
                 }
 
                 // Handle Font Styles like LowerCase, UpperCase and SmallCaps.
-                #region Handling of LowerCase, UpperCase and SmallCaps Font Styles
+#region Handling of LowerCase, UpperCase and SmallCaps Font Styles
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Handle Font Style");
 #endif
@@ -1935,11 +1953,11 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion
+#endregion
 
 
                 // Look up Character Data from Dictionary and cache it.
-                #region Look up Character Data
+#region Look up Character Data
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Lookup Character Data");
 #endif
@@ -1996,17 +2014,17 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion
+#endregion
 
 
                 // Handle Soft Hyphen
-                #region Handle Soft Hyphen
+#region Handle Soft Hyphen
                 float old_scale = currentElementScale;
                 if (charCode == 0xAD)
                 {
                     currentElementScale = 0;
                 }
-                #endregion
+#endregion
 
 
                 // Store some of the text object's information
@@ -2022,7 +2040,7 @@ namespace TMPro
 
 
                 // Handle Kerning if Enabled.
-                #region Handle Kerning
+#region Handle Kerning
                 TMP_GlyphValueRecord glyphAdjustments = new TMP_GlyphValueRecord();
                 float characterSpacingAdjustment = m_characterSpacing;
                 if (m_enableKerning)
@@ -2055,11 +2073,11 @@ namespace TMPro
                         }
                     }
                 }
-                #endregion
+#endregion
 
 
                 // Initial Implementation for RTL support.
-                #region Handle Right-to-Left
+#region Handle Right-to-Left
                 if (m_isRightToLeft)
                 {
                     m_xAdvance -= ((m_cached_TextElement.glyph.metrics.horizontalAdvance * bold_xAdvance_multiplier + characterSpacingAdjustment + m_wordSpacing + m_currentFontAsset.normalSpacingOffset) * currentElementScale + m_cSpacing) * (1 - m_charWidthAdjDelta);
@@ -2067,22 +2085,22 @@ namespace TMPro
                     if (char.IsWhiteSpace((char)charCode) || charCode == 0x200B)
                         m_xAdvance -= m_wordSpacing * currentElementScale;
                 }
-                #endregion
+#endregion
 
 
                 // Handle Mono Spacing
-                #region Handle Mono Spacing
+#region Handle Mono Spacing
                 float monoAdvance = 0;
                 if (m_monoSpacing != 0)
                 {
                     monoAdvance = (m_monoSpacing / 2 - (m_cached_TextElement.glyph.metrics.width / 2 + m_cached_TextElement.glyph.metrics.horizontalBearingX) * currentElementScale) * (1 - m_charWidthAdjDelta);
                     m_xAdvance += monoAdvance;
                 }
-                #endregion
+#endregion
 
 
                 // Set Padding based on selected font style
-                #region Handle Style Padding
+#region Handle Style Padding
                 if (m_textElementType == TMP_TextElementType.Character && !isUsingAltTypeface && ((m_FontStyleInternal & FontStyles.Bold) == FontStyles.Bold)) // Checks for any combination of Bold Style.
                 {
                     if (m_currentMaterial.HasProperty(ShaderUtilities.ID_GradientScale))
@@ -2115,11 +2133,11 @@ namespace TMPro
 
                     bold_xAdvance_multiplier = 1.0f;
                 }
-                #endregion Handle Style Padding
+#endregion Handle Style Padding
 
 
                 // Determine the position of the vertices of the Character or Sprite.
-                #region Calculate Vertices Position
+#region Calculate Vertices Position
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Calculate Vertices Position");
 #endif
@@ -2147,11 +2165,11 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion
+#endregion
 
 
                 // Check if we need to Shear the rectangles for Italic styles
-                #region Handle Italic & Shearing
+#region Handle Italic & Shearing
                 if (m_textElementType == TMP_TextElementType.Character && !isUsingAltTypeface && ((m_FontStyleInternal & FontStyles.Italic) == FontStyles.Italic))
                 {
                     // Shift Top vertices forward by half (Shear Value * height of character) and Bottom vertices back by same amount. 
@@ -2164,11 +2182,11 @@ namespace TMPro
                     top_right = top_right + topShear;
                     bottom_right = bottom_right + bottomShear;
                 }
-                #endregion Handle Italics & Shearing
+#endregion Handle Italics & Shearing
 
 
                 // Handle Character Rotation
-                #region Handle Character Rotation
+#region Handle Character Rotation
                 if (m_isFXMatrixSet)
                 {
                     // Apply scale matrix when simulating Condensed text.
@@ -2187,7 +2205,7 @@ namespace TMPro
                     top_right = m_FXMatrix.MultiplyPoint3x4(top_right - positionOffset) + positionOffset;
                     bottom_right = m_FXMatrix.MultiplyPoint3x4(bottom_right - positionOffset) + positionOffset;
                 }
-                #endregion
+#endregion
 
 
                 // Store vertex information for the character or sprite.
@@ -2235,7 +2253,7 @@ namespace TMPro
                 m_textInfo.characterInfo[m_characterCount].isVisible = false;
 
                 // Setup Mesh for visible text elements. ie. not a SPACE / LINEFEED / CARRIAGE RETURN.
-                #region Handle Visible Characters
+#region Handle Visible Characters
                 //#if TMP_PROFILE_ON
                 //Profiler.BeginSample("Handle Visible Characters");
                 //#endif
@@ -2243,7 +2261,7 @@ namespace TMPro
                 {
                     m_textInfo.characterInfo[m_characterCount].isVisible = true;
 
-                    #region Experimental Margin Shaper
+#region Experimental Margin Shaper
                     //Vector2 shapedMargins;
                     //if (marginShaper)
                     //{
@@ -2276,7 +2294,7 @@ namespace TMPro
                     //    width = m_width;
                     //}
                     //m_textInfo.lineInfo[m_lineNumber].marginLeft = shapedMargins.x;
-                    #endregion
+#endregion
 
                     width = m_width != -1 ? Mathf.Min(marginWidth + 0.0001f - m_marginLeft - m_marginRight, m_width) : marginWidth + 0.0001f - m_marginLeft - m_marginRight;
                     m_textInfo.lineInfo[m_lineNumber].marginLeft = m_marginLeft;
@@ -2287,24 +2305,24 @@ namespace TMPro
                     linebreakingWidth = Mathf.Abs(m_xAdvance) + (!m_isRightToLeft ? m_cached_TextElement.glyph.metrics.horizontalAdvance : 0) * (1 - m_charWidthAdjDelta) * (charCode != 0xAD ? currentElementScale : old_scale);
 
                     // Check if Character exceeds the width of the Text Container
-                    #region Handle Line Breaking, Text Auto-Sizing and Horizontal Overflow
+#region Handle Line Breaking, Text Auto-Sizing and Horizontal Overflow
                     if (linebreakingWidth > width * (isJustifiedOrFlush ? 1.05f : 1.0f))
                     {
                         ellipsisIndex = m_characterCount - 1; // Last safely rendered character
 
                         // Word Wrapping
-                        #region Handle Word Wrapping
+#region Handle Word Wrapping
                         if (enableWordWrapping && m_characterCount != m_firstCharacterOfLine)
                         {
                             // Check if word wrapping is still possible
-                            #region Line Breaking Check
+#region Line Breaking Check
                             if (wrappingIndex == m_SavedWordWrapState.previous_WordBreak || isFirstWord)
                             {
                                 // Word wrapping is no longer possible. Shrink size of text if auto-sizing is enabled.
                                 if (m_enableAutoSizing && m_fontSize > m_fontSizeMin)
                                 {
                                     // Handle Character Width Adjustments
-                                    #region Character Width Adjustments
+#region Character Width Adjustments
                                     if (m_charWidthAdjDelta < m_charWidthMaxAdj / 100)
                                     {
                                         loopCountA = 0;
@@ -2312,7 +2330,7 @@ namespace TMPro
                                         GenerateTextMesh();
                                         return;
                                     }
-                                    #endregion
+#endregion
 
                                     // Adjust Point Size
                                     m_maxFontSize = m_fontSize;
@@ -2343,7 +2361,7 @@ namespace TMPro
                                 //    continue;
                                 //}
                             }
-                            #endregion
+#endregion
 
                             // Restore to previously stored state of last valid (space character or linefeed)
                             i = RestoreWordWrappingState(ref m_SavedWordWrapState);
@@ -2442,15 +2460,15 @@ namespace TMPro
 
                             continue;
                         }
-                        #endregion End Word Wrapping
+#endregion End Word Wrapping
 
 
                         // Text Auto-Sizing (text exceeding Width of container. 
-                        #region Handle Text Auto-Sizing
+#region Handle Text Auto-Sizing
                         if (m_enableAutoSizing && m_fontSize > m_fontSizeMin)
                         {
                             // Handle Character Width Adjustments
-                            #region Character Width Adjustments
+#region Character Width Adjustments
                             if (m_charWidthAdjDelta < m_charWidthMaxAdj / 100)
                             {
                                 loopCountA = 0;
@@ -2458,7 +2476,7 @@ namespace TMPro
                                 GenerateTextMesh();
                                 return;
                             }
-                            #endregion
+#endregion
 
                             // Adjust Point Size
                             m_maxFontSize = m_fontSize;
@@ -2471,11 +2489,11 @@ namespace TMPro
                             GenerateTextMesh();
                             return;
                         }
-                        #endregion End Text Auto-Sizing
+#endregion End Text Auto-Sizing
 
 
                         // Handle Text Overflow
-                        #region Handle Text Overflow
+#region Handle Text Overflow
                         switch (m_overflowMode)
                         {
                             case TextOverflowModes.Overflow:
@@ -2541,10 +2559,10 @@ namespace TMPro
                                 //}
                                 break;
                         }
-                        #endregion End Text Overflow
+#endregion End Text Overflow
 
                     }
-                    #endregion End Check for Characters Exceeding Width of Text Container
+#endregion End Check for Characters Exceeding Width of Text Container
 
 
                     // Special handling of characters that are not ignored at the end of a line.
@@ -2601,11 +2619,11 @@ namespace TMPro
                 //#if TMP_PROFILE_ON
                 //Profiler.EndSample();
                 //#endif
-                #endregion Handle Visible Characters
+#endregion Handle Visible Characters
 
 
                 // Check if Line Spacing of previous line needs to be adjusted.
-                #region Adjust Line Spacing
+#region Adjust Line Spacing
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Adjust Line Spacing");
 #endif
@@ -2626,28 +2644,28 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion
+#endregion
 
 
                 // Store Rectangle positions for each Character.
-                #region Store Character Data
+#region Store Character Data
                 m_textInfo.characterInfo[m_characterCount].lineNumber = m_lineNumber;
                 m_textInfo.characterInfo[m_characterCount].pageNumber = m_pageNumber;
 
                 if (charCode != 10 && charCode != 13 && charCode != 8230 || m_textInfo.lineInfo[m_lineNumber].characterCount == 1)
                     m_textInfo.lineInfo[m_lineNumber].alignment = m_lineJustification;
-                #endregion Store Character Data
+#endregion Store Character Data
 
 
                 // Check if text Exceeds the vertical bounds of the margin area.
-                #region Check Vertical Bounds & Auto-Sizing
+#region Check Vertical Bounds & Auto-Sizing
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Check Vertical Bounds");
 #endif
                 if (m_maxAscender - elementDescenderII > marginHeight + 0.0001f)
                 {
                     // Handle Line spacing adjustments
-                    #region Line Spacing Adjustments
+#region Line Spacing Adjustments
                     if (m_enableAutoSizing && m_lineSpacingDelta > m_lineSpacingMax && m_lineNumber > 0)
                     {
                         loopCountA = 0;
@@ -2656,11 +2674,11 @@ namespace TMPro
                         GenerateTextMesh();
                         return;
                     }
-                    #endregion
+#endregion
 
 
                     // Handle Text Auto-sizing resulting from text exceeding vertical bounds.
-                    #region Text Auto-Sizing (Text greater than vertical bounds)
+#region Text Auto-Sizing (Text greater than vertical bounds)
                     if (m_enableAutoSizing && m_fontSize > m_fontSizeMin)
                     {
                         m_maxFontSize = m_fontSize;
@@ -2673,14 +2691,14 @@ namespace TMPro
                         GenerateTextMesh();
                         return;
                     }
-                    #endregion Text Auto-Sizing
+#endregion Text Auto-Sizing
 
                     // Set isTextOverflowing and firstOverflowCharacterIndex
                     if (m_firstOverflowCharacterIndex == -1)
                         m_firstOverflowCharacterIndex = m_characterCount;
 
                     // Handle Text Overflow
-                    #region Text Overflow
+#region Text Overflow
                     switch (m_overflowMode)
                     {
                         case TextOverflowModes.Overflow:
@@ -2808,17 +2826,17 @@ namespace TMPro
                                 return;
                             }
                     }
-                    #endregion End Text Overflow
+#endregion End Text Overflow
 
                 }
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion Check Vertical Bounds
+#endregion Check Vertical Bounds
 
 
                 // Handle xAdvance & Tabulation Stops. Tab stops at every 25% of Font Size.
-                #region XAdvance, Tabulation & Stops
+#region XAdvance, Tabulation & Stops
                 if (charCode == 9)
                 {
                     float tabSize = m_currentFontAsset.faceInfo.tabWidth * m_currentFontAsset.tabSize * currentElementScale;
@@ -2851,20 +2869,20 @@ namespace TMPro
                 // Store xAdvance information
                 m_textInfo.characterInfo[m_characterCount].xAdvance = m_xAdvance;
 
-                #endregion Tabulation & Stops
+#endregion Tabulation & Stops
 
 
                 // Handle Carriage Return
-                #region Carriage Return
+#region Carriage Return
                 if (charCode == 13)
                 {
                     m_xAdvance = 0 + tag_Indent;
                 }
-                #endregion Carriage Return
+#endregion Carriage Return
 
 
                 // Handle Line Spacing Adjustments + Word Wrapping & special case for last line.
-                #region Check for Line Feed and Last Character
+#region Check for Line Feed and Last Character
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Process Linefeed");
 #endif
@@ -2963,11 +2981,11 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion Check for Linefeed or Last Character
+#endregion Check for Linefeed or Last Character
 
 
                 // Store Rectangle positions for each Character.
-                #region Save CharacterInfo for the current character.
+#region Save CharacterInfo for the current character.
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Save CharacterInfo & Extents");
 #endif
@@ -3008,11 +3026,11 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion Saving CharacterInfo
+#endregion Saving CharacterInfo
 
 
                 // Save State of Mesh Creation for handling of Word Wrapping
-                #region Save Word Wrapping State
+#region Save Word Wrapping State
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Save Word Wrapping State");
 #endif
@@ -3052,13 +3070,13 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion Save Word Wrapping State
+#endregion Save Word Wrapping State
 
                 m_characterCount += 1;
             }
 
             // Check Auto Sizing and increase font size to fill text container.
-            #region Check Auto-Sizing (Upper Font Size Bounds)
+#region Check Auto-Sizing (Upper Font Size Bounds)
             fontSizeDelta = m_maxFontSize - m_minFontSize;
             if (!m_isCharacterWrappingEnabled && m_enableAutoSizing && fontSizeDelta > 0.051f && m_fontSize < m_fontSizeMax)
             {
@@ -3072,7 +3090,7 @@ namespace TMPro
                 GenerateTextMesh();
                 return;
             }
-            #endregion End Auto-sizing Check
+#endregion End Auto-sizing Check
 
 
             m_isCharacterWrappingEnabled = false;
@@ -3106,7 +3124,7 @@ namespace TMPro
             m_textInfo.meshInfo[0].Clear(false);
 
             // Handle Text Alignment
-            #region Text Vertical Alignment
+#region Text Vertical Alignment
 #if TMP_PROFILE_ON
             Profiler.BeginSample("Vertical Text Alignment");
 #endif
@@ -3187,7 +3205,7 @@ namespace TMPro
 #if TMP_PROFILE_ON
             Profiler.EndSample();
 #endif
-            #endregion
+#endregion
 
 
             // Initialization for Second Pass
@@ -3206,7 +3224,7 @@ namespace TMPro
             int wordLastChar = 0;
 
             // Second Pass : Line Justification, UV Mapping, Character & Line Visibility & more.
-            #region Handle Line Justification & UV Mapping & Character Visibility & More
+#region Handle Line Justification & UV Mapping & Character Visibility & More
 
             // Variables used to handle Canvas Render Modes and SDF Scaling
             bool isCameraAssigned = m_canvas.worldCamera == null ? false : true;
@@ -3230,7 +3248,7 @@ namespace TMPro
             float strikethroughBaseline = 0;
 
             TMP_CharacterInfo[] characterInfos = m_textInfo.characterInfo;
-            #region Handle Line Justification & UV Mapping & Character Visibility & More
+#region Handle Line Justification & UV Mapping & Character Visibility & More
             for (int i = 0; i < m_characterCount; i++)
             {
                 TMP_FontAsset currentFontAsset = characterInfos[i].fontAsset;
@@ -3244,7 +3262,7 @@ namespace TMPro
                 TextAlignmentOptions lineAlignment = lineInfo.alignment;
 
                 // Process Line Justification
-                #region Handle Line Justification
+#region Handle Line Justification
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Horizontal Text Alignment");
 #endif
@@ -3374,12 +3392,12 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion End Text Justification
+#endregion End Text Justification
 
                 offset = anchorOffset + justificationOffset;
 
                 // Handle UV2 mapping options and packing of scale information into UV2.
-                #region Handling of UV2 mapping & Scale packing
+#region Handling of UV2 mapping & Scale packing
                 bool isCharacterVisible = characterInfos[i].isVisible;
                 if (isCharacterVisible)
                 {
@@ -3392,7 +3410,7 @@ namespace TMPro
                             float uvOffset = (m_uvLineOffset * currentLine) % 1; // + m_uvOffset.x;
 
                             // Setup UV2 based on Character Mapping Options Selected
-                            #region Handle UV Mapping Options
+#region Handle UV Mapping Options
 #if TMP_PROFILE_ON
                             Profiler.BeginSample("UV MAPPING");
 #endif
@@ -3505,10 +3523,10 @@ namespace TMPro
 #if TMP_PROFILE_ON
                             Profiler.EndSample();
 #endif
-                            #endregion End UV Mapping Options
+#endregion End UV Mapping Options
 
                             // Pack UV's so that we can pass Xscale needed for Shader to maintain 1:1 ratio.
-                            #region Pack Scale into UV2
+#region Pack Scale into UV2
 #if TMP_PROFILE_ON
                             Profiler.BeginSample("Pack UV");
 #endif
@@ -3556,7 +3574,7 @@ namespace TMPro
 #if TMP_PROFILE_ON
                                 Profiler.EndSample();
 #endif
-                            #endregion
+#endregion
                             break;
 
                         // SPRITES
@@ -3566,7 +3584,7 @@ namespace TMPro
                     }
 
                     // Handle maxVisibleCharacters, maxVisibleLines and Overflow Page Mode.
-                    #region Handle maxVisibleCharacters / maxVisibleLines / Page Mode
+#region Handle maxVisibleCharacters / maxVisibleLines / Page Mode
 #if TMP_PROFILE_ON
                     Profiler.BeginSample("Process MaxVisible Characters & Lines");
 #endif
@@ -3595,7 +3613,7 @@ namespace TMPro
 #if TMP_PROFILE_ON
                     Profiler.EndSample();
 #endif
-                    #endregion
+#endregion
 
 
                     // Fill Vertex Buffers for the various types of element
@@ -3608,7 +3626,7 @@ namespace TMPro
                         FillSpriteVertexBuffers(i, sprite_index_X4);
                     }
                 }
-                #endregion
+#endregion
 
                 // Apply Alignment and Justification Offset
                 m_textInfo.characterInfo[i].bottomLeft += offset;
@@ -3631,7 +3649,7 @@ namespace TMPro
                 }
 
                 // Need to recompute lineExtent to account for the offset from justification.
-                #region Adjust lineExtents resulting from alignment offset
+#region Adjust lineExtents resulting from alignment offset
 #if TMP_PROFILE_ON
                     Profiler.BeginSample("Adjust LineExtents");
 #endif
@@ -3662,11 +3680,11 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion
+#endregion
 
 
                 // Track Word Count per line and for the object
-                #region Track Word Count
+#region Track Word Count
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Track Word Count");
 #endif
@@ -3729,11 +3747,11 @@ namespace TMPro
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion
+#endregion
 
 
                 // Setup & Handle Underline
-                #region Underline
+#region Underline
 #if TMP_PROFILE_ON
                 Profiler.BeginSample("Process Underline & Strikethrough");
 #endif
@@ -3846,11 +3864,11 @@ namespace TMPro
                         underlineBaseLine = k_LargePositiveFloat;
                     }
                 }
-                #endregion
+#endregion
 
 
                 // Setup & Handle Strikethrough
-                #region Strikethrough
+#region Strikethrough
                 // NOTE: Need to figure out how underline will be handled with multiple fonts and which font will be used for the underline.
                 bool isStrikethrough = (m_textInfo.characterInfo[i].style & FontStyles.Strikethrough) == FontStyles.Strikethrough;
                 float strikethroughOffset = currentFontAsset.faceInfo.strikethroughOffset;
@@ -3945,11 +3963,11 @@ namespace TMPro
                         DrawUnderlineMesh(strikethrough_start, strikethrough_end, ref last_vert_index, strikethroughScale, strikethroughScale, strikethroughScale, xScale, strikethroughColor);
                     }
                 }
-                #endregion
+#endregion
 
 
                 // HANDLE TEXT HIGHLIGHTING
-                #region Text Highlighting
+#region Text Highlighting
                 bool isHighlight = (m_textInfo.characterInfo[i].style & FontStyles.Highlight) == FontStyles.Highlight;
                 if (isHighlight)
                 {
@@ -4035,15 +4053,15 @@ namespace TMPro
                         DrawTextHighlight(highlight_start, highlight_end, ref last_vert_index, highlightColor);
                     }
                 }
-                #endregion
+#endregion
 #if TMP_PROFILE_ON
                 Profiler.EndSample();
 #endif
-                #endregion
+#endregion
 
                 lastLine = currentLine;
             }
-            #endregion
+#endregion
 
 
             // METRICS ABOUT THE TEXT OBJECT
@@ -4320,5 +4338,18 @@ namespace TMPro
             }
         }
 
+        protected override void Release()
+        {
+#if TMP_USE_POOL
+
+            TMP_ArrayPool<TMP_SubMeshUI>.Release(m_subTextObjects);
+
+            TMP_ArrayPool<Vector3>.Release(m_RectTransformCorners);
+
+#else
+
+#endif
+            base.Release();
+        }
     }
 }

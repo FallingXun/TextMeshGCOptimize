@@ -14,6 +14,22 @@ namespace TMPro
 
     public partial class TextMeshPro
     {
+        public TextMeshPro()
+        {
+#if TMP_USE_POOL
+
+            m_subTextObjects = TMP_ArrayPool<TMP_SubMesh>.Get(8);
+
+            m_RectTransformCorners = TMP_ArrayPool<Vector3>.Get(4);
+
+#else
+
+            m_subTextObjects = new TMP_SubMesh[8];
+
+            m_RectTransformCorners = new Vector3[4];
+#endif
+        }
+
         [SerializeField]
         private bool m_hasFontAssetChanged = false; // Used to track when font properties have changed.
 
@@ -28,7 +44,7 @@ namespace TMPro
         private int m_max_numberOfLines = 4; // Determines the initial allocation and maximum number of lines of text. 
 
         [SerializeField]
-        protected TMP_SubMesh[] m_subTextObjects = new TMP_SubMesh[8];
+        protected TMP_SubMesh[] m_subTextObjects;
 
 
         // MASKING RELATED PROPERTIES
@@ -47,7 +63,7 @@ namespace TMPro
 
 
         // Text Container / RectTransform Component
-        private Vector3[] m_RectTransformCorners = new Vector3[4];
+        private Vector3[] m_RectTransformCorners;
 
         [NonSerialized]
         private bool m_isRegisteredForEvents;
@@ -4051,5 +4067,18 @@ namespace TMPro
             }
         }
 
+        protected override void Release()
+        {
+#if TMP_USE_POOL
+
+            TMP_ArrayPool<TMP_SubMesh>.Release(m_subTextObjects);
+
+            TMP_ArrayPool<Vector3>.Release(m_RectTransformCorners);
+
+#else
+
+#endif
+            base.Release();
+        }
     }
 }

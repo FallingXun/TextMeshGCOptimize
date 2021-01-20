@@ -117,6 +117,8 @@ namespace TMPro
             //m_sizeStack = new TMP_RichTextTagStack<float>(16);
             //m_FontWeightStack = new TMP_RichTextTagStack<FontWeight>(8);
 
+            m_lineJustificationStack = new TMP_RichTextTagStack<TextAlignmentOptions>(TMP_ArrayPool<TextAlignmentOptions>.Get(16));
+
             m_textContainerLocalCorners = TMP_ArrayPool<Vector3>.Get(4);
 
             m_htmlTag = TMP_ArrayPool<char>.Get(128);
@@ -152,6 +154,8 @@ namespace TMPro
             //m_sizeStack = new TMP_RichTextTagStack<float>(16);
             //m_FontWeightStack = new TMP_RichTextTagStack<FontWeight>(8);
 
+            m_lineJustificationStack = new TMP_RichTextTagStack<TextAlignmentOptions>(new TextAlignmentOptions[16]);
+
             m_textContainerLocalCorners = new Vector3[4];
 
             m_htmlTag = new char[128];
@@ -182,12 +186,14 @@ namespace TMPro
 #endif
         }
 
-        protected void Release()
+        protected virtual void Release()
         {
 #if TMP_USE_POOL
             TMP_ArrayPool<MaterialReference>.Release(m_materialReferences);
 
             TMP_ArrayPool<MaterialReference>.Release(m_materialReferenceStack.m_ItemStack);
+
+            TMP_ArrayPool<TextAlignmentOptions>.Release(m_lineJustificationStack.m_ItemStack);
 
             TMP_ArrayPool<Vector3>.Release(m_textContainerLocalCorners);
 
@@ -625,8 +631,8 @@ namespace TMPro
         [UnityEngine.Serialization.FormerlySerializedAs("m_lineJustification")]
         protected TextAlignmentOptions m_textAlignment = TextAlignmentOptions.TopLeft;
         protected TextAlignmentOptions m_lineJustification;
-        protected TMP_RichTextTagStack<TextAlignmentOptions> m_lineJustificationStack = new TMP_RichTextTagStack<TextAlignmentOptions>(new TextAlignmentOptions[16]);
-        protected Vector3[] m_textContainerLocalCorners = new Vector3[4];
+        protected TMP_RichTextTagStack<TextAlignmentOptions> m_lineJustificationStack;
+        protected Vector3[] m_textContainerLocalCorners;
 
         /// <summary>
         /// Use the extents of the text geometry for alignment instead of font metrics.
