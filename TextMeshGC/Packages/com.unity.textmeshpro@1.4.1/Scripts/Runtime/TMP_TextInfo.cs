@@ -39,6 +39,15 @@ namespace TMPro
         // Default Constructor
         public TMP_TextInfo()
         {
+#if TMP_USE_POOL
+            characterInfo = TMP_ArrayPool<TMP_CharacterInfo>.Get(8);
+            wordInfo = TMP_ArrayPool<TMP_WordInfo>.Get(16);
+            linkInfo = TMP_ArrayPool<TMP_LinkInfo>.Get(0);
+            lineInfo = TMP_ArrayPool<TMP_LineInfo>.Get(2);
+            pageInfo = TMP_ArrayPool<TMP_PageInfo>.Get(4);
+
+            meshInfo = TMP_ArrayPool<TMP_MeshInfo>.Get(1);
+#else
             characterInfo = new TMP_CharacterInfo[8];
             wordInfo = new TMP_WordInfo[16];
             linkInfo = new TMP_LinkInfo[0];
@@ -46,24 +55,37 @@ namespace TMPro
             pageInfo = new TMP_PageInfo[4];
 
             meshInfo = new TMP_MeshInfo[1];
+#endif
         }
 
 
         public TMP_TextInfo(TMP_Text textComponent)
         {
             this.textComponent = textComponent;
+#if TMP_USE_POOL
+            characterInfo = TMP_ArrayPool<TMP_CharacterInfo>.Get(8);
 
+            wordInfo = TMP_ArrayPool<TMP_WordInfo>.Get(4);
+            linkInfo = TMP_ArrayPool<TMP_LinkInfo>.Get(0);
+
+            lineInfo = TMP_ArrayPool<TMP_LineInfo>.Get(2);
+            pageInfo = TMP_ArrayPool<TMP_PageInfo>.Get(4);
+
+            meshInfo = TMP_ArrayPool<TMP_MeshInfo>.Get(1);
+#else
             characterInfo = new TMP_CharacterInfo[8];
 
             wordInfo = new TMP_WordInfo[4];
             linkInfo = new TMP_LinkInfo[0];
-
+       
             lineInfo = new TMP_LineInfo[2];
             pageInfo = new TMP_PageInfo[4];
-
+                  
             meshInfo = new TMP_MeshInfo[1];
+#endif
             meshInfo[0].mesh = textComponent.mesh;
             materialCount = 1;
+
         }
 
 
@@ -137,7 +159,13 @@ namespace TMPro
         public void ClearLineInfo()
         {
             if (this.lineInfo == null)
+            {
+#if TMP_USE_POOL
+                this.lineInfo = TMP_ArrayPool<TMP_LineInfo>.Get(2);
+#else
                 this.lineInfo = new TMP_LineInfo[2];
+#endif
+            }
 
             for (int i = 0; i < this.lineInfo.Length; i++)
             {
@@ -168,7 +196,12 @@ namespace TMPro
         {
             if (m_CachedMeshInfo == null || m_CachedMeshInfo.Length != meshInfo.Length)
             {
+#if TMP_USE_POOL
+                TMP_ArrayPool<TMP_MeshInfo>.Release(m_CachedMeshInfo);
+                m_CachedMeshInfo = TMP_ArrayPool<TMP_MeshInfo>.Get(meshInfo.Length);
+#else
                 m_CachedMeshInfo = new TMP_MeshInfo[meshInfo.Length];
+#endif
 
                 // Initialize all the vertex data arrays
                 for (int i = 0; i < m_CachedMeshInfo.Length; i++)
@@ -225,7 +258,7 @@ namespace TMPro
         /// <typeparam name="T"></typeparam>
         /// <param name="array"></param>
         /// <param name="size"></param>
-        public static void Resize<T> (ref T[] array, int size)
+        public static void Resize<T>(ref T[] array, int size)
         {
             // Allocated to the next power of two
             int newSize = size > 1024 ? size + 256 : Mathf.NextPowerOfTwo(size);
@@ -252,5 +285,21 @@ namespace TMPro
             Array.Resize(ref array, size);
         }
 
+        public void Release()
+        {
+#if TMP_USE_POOL
+            TMP_ArrayPool<TMP_CharacterInfo>.Release(characterInfo);
+            TMP_ArrayPool<TMP_WordInfo>.Release(wordInfo);
+            TMP_ArrayPool<TMP_LinkInfo>.Release(linkInfo);
+            TMP_ArrayPool<TMP_LineInfo>.Release(lineInfo);
+            TMP_ArrayPool<TMP_PageInfo>.Release(pageInfo);
+
+            TMP_ArrayPool<TMP_MeshInfo>.Release(meshInfo);
+
+            TMP_ArrayPool<TMP_MeshInfo>.Release(m_CachedMeshInfo);
+#else
+
+#endif
+        }
     }
 }

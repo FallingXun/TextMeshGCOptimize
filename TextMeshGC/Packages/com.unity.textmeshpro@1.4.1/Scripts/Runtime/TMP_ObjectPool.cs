@@ -48,4 +48,70 @@ namespace TMPro
             m_Stack.Push(element);
         }
     }
+
+    internal class TMP_ArrayObjectPool<T> where T : new()
+    {
+        private readonly Dictionary<int, Stack<T[]>> m_StackDic = new Dictionary<int, Stack<T[]>>();
+        private readonly UnityAction<T[]> m_ActionOnGet;
+        private readonly UnityAction<T[]> m_ActionOnRelease;
+
+        public int countAll { get; private set; }
+        public int countActive { get { return countAll - countInactive; } }
+        public int countInactive
+        {
+            get
+            {
+                int count = 0;
+                foreach (var stack in m_StackDic.Values)
+                {
+                    count += stack.Count;
+                }
+                return count;
+            }
+        }
+
+        public TMP_ArrayObjectPool(UnityAction<T[]> actionOnGet, UnityAction<T[]> actionOnRelease)
+        {
+            m_ActionOnGet = actionOnGet;
+            m_ActionOnRelease = actionOnRelease;
+        }
+
+        public T[] Get(int count)
+        {
+            T[] element;
+            if(m_StackDic.TryGetValue(count, out Stack<T[]> stack) == false)
+            {
+                stack = new Stack<T[]>();
+                m_StackDic[count] = stack;
+            }
+            if (stack.Count == 0)
+            {
+                element = new T[count];
+                countAll++;
+            }
+            else
+            {
+                element = stack.Pop();
+            }
+            if (m_ActionOnGet != null)
+                m_ActionOnGet(element);
+            return element;
+        }
+
+        public void Release(int count, T[] element)
+        {
+            if(m_StackDic.TryGetValue(count, out Stack<T[]> stack))
+            {
+                if (stack.Count > 0 && ReferenceEquals(stack.Peek(), element))
+                    Debug.LogErrorFormat("Internal error. Trying to destroy object that is already released to pool. count = {0}", count.ToString());
+                if (m_ActionOnRelease != null)
+                    m_ActionOnRelease(element);
+                stack.Push(element);
+            }
+            else
+            {
+                Debug.LogErrorFormat("Internal error. Trying to destroy object that is already released to pool. count = {0}", count.ToString());
+            }
+        }
+    }
 }

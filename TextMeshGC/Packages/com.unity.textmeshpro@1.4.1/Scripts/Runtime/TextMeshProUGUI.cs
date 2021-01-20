@@ -651,6 +651,5 @@ namespace TMPro
         {        
             LoadFontAsset();
         }
-
     }
 }
