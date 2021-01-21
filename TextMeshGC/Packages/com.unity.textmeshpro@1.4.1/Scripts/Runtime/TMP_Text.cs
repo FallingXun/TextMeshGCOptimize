@@ -110,41 +110,58 @@ namespace TMPro
         {
 
 #if TMP_USE_POOL
+            TMP_ArrayPool<MaterialReference>.Release(m_materialReferences);
             m_materialReferences = TMP_ArrayPool<MaterialReference>.Get(32);
 
+            TMP_ArrayPool<MaterialReference>.Release(m_materialReferenceStack.m_ItemStack);
             m_materialReferenceStack = new TMP_RichTextTagStack<MaterialReference>(TMP_ArrayPool<MaterialReference>.Get(16));
 
             //m_sizeStack = new TMP_RichTextTagStack<float>(16);
             //m_FontWeightStack = new TMP_RichTextTagStack<FontWeight>(8);
 
+            TMP_ArrayPool<TextAlignmentOptions>.Release(m_lineJustificationStack.m_ItemStack);
             m_lineJustificationStack = new TMP_RichTextTagStack<TextAlignmentOptions>(TMP_ArrayPool<TextAlignmentOptions>.Get(16));
 
+            TMP_ArrayPool<Vector3>.Release(m_textContainerLocalCorners);
             m_textContainerLocalCorners = TMP_ArrayPool<Vector3>.Get(4);
 
+            TMP_ArrayPool<char>.Release(m_htmlTag);
             m_htmlTag = TMP_ArrayPool<char>.Get(128);
 
+            TMP_ArrayPool<RichTextTagAttribute>.Release(m_xmlAttribute);
             m_xmlAttribute = TMP_ArrayPool<RichTextTagAttribute>.Get(8);
 
+            TMP_ArrayPool<float>.Release(m_attributeParameterValues);
             m_attributeParameterValues = TMP_ArrayPool<float>.Get(16);
 
+            TMP_ArrayPool<float>.Release(m_indentStack.m_ItemStack);
             m_indentStack = new TMP_RichTextTagStack<float>(TMP_ArrayPool<float>.Get(16));
 
+            TMP_ArrayPool<char>.Release(m_input_CharArray);
             m_input_CharArray = TMP_ArrayPool<char>.Get(256);
 
+            TMP_ArrayPool<Color32>.Release(m_colorStack.m_ItemStack);
             m_colorStack = new TMP_RichTextTagStack<Color32>(TMP_ArrayPool<Color32>.Get(16));
 
+            TMP_ArrayPool<Color32>.Release(m_underlineColorStack.m_ItemStack);
             m_underlineColorStack = new TMP_RichTextTagStack<Color32>(TMP_ArrayPool<Color32>.Get(16));
 
+            TMP_ArrayPool<Color32>.Release(m_strikethroughColorStack.m_ItemStack);
             m_strikethroughColorStack = new TMP_RichTextTagStack<Color32>(TMP_ArrayPool<Color32>.Get(16));
 
+            TMP_ArrayPool<Color32>.Release(m_highlightColorStack.m_ItemStack);
             m_highlightColorStack = new TMP_RichTextTagStack<Color32>(TMP_ArrayPool<Color32>.Get(16));
 
+            TMP_ArrayPool<TMP_ColorGradient>.Release(m_colorGradientStack.m_ItemStack);
             m_colorGradientStack = new TMP_RichTextTagStack<TMP_ColorGradient>(TMP_ArrayPool<TMP_ColorGradient>.Get(16));
 
+            TMP_ArrayPool<int>.Release(m_styleStack.m_ItemStack);
             m_styleStack = new TMP_RichTextTagStack<int>(TMP_ArrayPool<int>.Get(16));
 
+            TMP_ArrayPool<int>.Release(m_actionStack.m_ItemStack);
             m_actionStack = new TMP_RichTextTagStack<int>(TMP_ArrayPool<int>.Get(16));
 
+            TMP_ArrayPool<float>.Release(m_baselineOffsetStack.m_ItemStack);
             m_baselineOffsetStack = new TMP_RichTextTagStack<float>(TMP_ArrayPool<float>.Get(16));
 #else 
             m_materialReferences = new MaterialReference[32];

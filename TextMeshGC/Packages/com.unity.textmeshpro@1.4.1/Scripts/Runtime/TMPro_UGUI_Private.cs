@@ -20,8 +20,10 @@ namespace TMPro
         {
 #if TMP_USE_POOL
 
+            TMP_ArrayPool<TMP_SubMeshUI>.Release(m_subTextObjects);
             m_subTextObjects = TMP_ArrayPool<TMP_SubMeshUI>.Get(8);
 
+            TMP_ArrayPool<Vector3>.Release(m_RectTransformCorners);
             m_RectTransformCorners = TMP_ArrayPool<Vector3>.Get(4);
 
 #else
@@ -123,6 +125,14 @@ namespace TMPro
                 m_mesh.hideFlags = HideFlags.HideAndDontSave;
 
                 // Create new TextInfo for the text object.
+#if TMP_USE_POOL
+                if (m_textInfo != null)
+                {
+                    // Clone实例化后会触发执行构造函数，m_textInfo如果不为空则需要先释放再重新创建，回收后单次可以减少3.2KB的GCAlloc
+                    m_textInfo.Release();
+                    m_textInfo = null;
+                }
+#endif
                 m_textInfo = new TMP_TextInfo(this);
             }
 
@@ -801,7 +811,14 @@ namespace TMPro
             int materialCount = m_textInfo.materialCount;
 
             if (m_fontMaterials == null)
+            {
+#if TMP_USE_POOL
+                TMP_ArrayPool<Material>.Release(m_fontMaterials);
+                m_fontMaterials = TMP_ArrayPool<Material>.Get(materialCount);
+#else
                 m_fontMaterials = new Material[materialCount];
+#endif
+            }
             else if (m_fontMaterials.Length != materialCount)
                 TMP_TextInfo.Resize(ref m_fontMaterials, materialCount, false);
 
@@ -845,7 +862,14 @@ namespace TMPro
             int materialCount = m_textInfo.materialCount;
 
             if (m_fontSharedMaterials == null)
+            {
+#if TMP_USE_POOL
+                TMP_ArrayPool<Material>.Release(m_fontSharedMaterials);
+                m_fontSharedMaterials = TMP_ArrayPool<Material>.Get(materialCount);
+#else
                 m_fontSharedMaterials = new Material[materialCount];
+#endif
+            }
             else if (m_fontSharedMaterials.Length != materialCount)
                 TMP_TextInfo.Resize(ref m_fontSharedMaterials, materialCount, false);
 
@@ -870,7 +894,14 @@ namespace TMPro
 
             // Check allocation of the fontSharedMaterials array.
             if (m_fontSharedMaterials == null)
+            {
+#if TMP_USE_POOL
+                TMP_ArrayPool<Material>.Release(m_fontSharedMaterials);
+                m_fontSharedMaterials = TMP_ArrayPool<Material>.Get(materialCount);
+#else
                 m_fontSharedMaterials = new Material[materialCount];
+#endif
+            }
             else if (m_fontSharedMaterials.Length != materialCount)
                 TMP_TextInfo.Resize(ref m_fontSharedMaterials, materialCount, false);
 

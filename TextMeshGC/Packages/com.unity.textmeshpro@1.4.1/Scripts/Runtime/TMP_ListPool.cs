@@ -19,7 +19,7 @@ namespace TMPro
         }
     }
 
-    internal static class TMP_ArrayPool<T> where T : new()
+    internal static class TMP_ArrayPool<T>
     {
         private static readonly TMP_ArrayObjectPool<T> s_ArrayPool = new TMP_ArrayObjectPool<T>(null, arr => System.Array.Clear(arr, 0, arr.Length));
 

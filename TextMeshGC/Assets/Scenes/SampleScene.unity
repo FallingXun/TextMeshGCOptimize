@@ -601,7 +601,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Root: {fileID: 2025765408}
   m_Default: {fileID: 709308341}
-  m_Count: 50
+  m_Count: 1
+  m_HasChild: 0
 --- !u!1 &2025765407
 GameObject:
   m_ObjectHideFlags: 0

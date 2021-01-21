@@ -40,12 +40,22 @@ namespace TMPro
         public TMP_TextInfo()
         {
 #if TMP_USE_POOL
+            TMP_ArrayPool<TMP_CharacterInfo>.Release(characterInfo);
             characterInfo = TMP_ArrayPool<TMP_CharacterInfo>.Get(8);
+
+            TMP_ArrayPool<TMP_WordInfo>.Release(wordInfo);
             wordInfo = TMP_ArrayPool<TMP_WordInfo>.Get(16);
+
+            TMP_ArrayPool<TMP_LinkInfo>.Release(linkInfo);
             linkInfo = TMP_ArrayPool<TMP_LinkInfo>.Get(0);
+
+            TMP_ArrayPool<TMP_LineInfo>.Release(lineInfo);
             lineInfo = TMP_ArrayPool<TMP_LineInfo>.Get(2);
+
+            TMP_ArrayPool<TMP_PageInfo>.Release(pageInfo);
             pageInfo = TMP_ArrayPool<TMP_PageInfo>.Get(4);
 
+            TMP_ArrayPool<TMP_MeshInfo>.Release(meshInfo);
             meshInfo = TMP_ArrayPool<TMP_MeshInfo>.Get(1);
 #else
             characterInfo = new TMP_CharacterInfo[8];
@@ -63,14 +73,22 @@ namespace TMPro
         {
             this.textComponent = textComponent;
 #if TMP_USE_POOL
+            TMP_ArrayPool<TMP_CharacterInfo>.Release(characterInfo);
             characterInfo = TMP_ArrayPool<TMP_CharacterInfo>.Get(8);
 
+            TMP_ArrayPool<TMP_WordInfo>.Release(wordInfo);
             wordInfo = TMP_ArrayPool<TMP_WordInfo>.Get(4);
+
+            TMP_ArrayPool<TMP_LinkInfo>.Release(linkInfo);
             linkInfo = TMP_ArrayPool<TMP_LinkInfo>.Get(0);
 
+            TMP_ArrayPool<TMP_LineInfo>.Release(lineInfo);
             lineInfo = TMP_ArrayPool<TMP_LineInfo>.Get(2);
+
+            TMP_ArrayPool<TMP_PageInfo>.Release(pageInfo);
             pageInfo = TMP_ArrayPool<TMP_PageInfo>.Get(4);
 
+            TMP_ArrayPool<TMP_MeshInfo>.Release(meshInfo);
             meshInfo = TMP_ArrayPool<TMP_MeshInfo>.Get(1);
 #else
             characterInfo = new TMP_CharacterInfo[8];
@@ -161,6 +179,7 @@ namespace TMPro
             if (this.lineInfo == null)
             {
 #if TMP_USE_POOL
+                TMP_ArrayPool<TMP_LineInfo>.Release(lineInfo);
                 this.lineInfo = TMP_ArrayPool<TMP_LineInfo>.Get(2);
 #else
                 this.lineInfo = new TMP_LineInfo[2];
@@ -263,7 +282,14 @@ namespace TMPro
             // Allocated to the next power of two
             int newSize = size > 1024 ? size + 256 : Mathf.NextPowerOfTwo(size);
 
+#if TMP_USE_POOL
+            T[] newArray = TMP_ArrayPool<T>.Get(newSize);
+            Array.Copy(array, 0, newArray, 0, array.Length > newSize? newSize : array.Length);
+            TMP_ArrayPool<T>.Release(array);
+            array = newArray;
+#else
             Array.Resize(ref array, newSize);
+#endif
         }
 
 
@@ -282,7 +308,14 @@ namespace TMPro
 
             if (size == array.Length) return;
 
+#if TMP_USE_POOL
+            T[] newArray = TMP_ArrayPool<T>.Get(size);
+            Array.Copy(array, 0, newArray, 0, array.Length > size ? size : array.Length);
+            TMP_ArrayPool<T>.Release(array);
+            array = newArray;
+#else
             Array.Resize(ref array, size);
+#endif
         }
 
         public void Release()

@@ -49,8 +49,12 @@ namespace TMPro
         }
     }
 
-    internal class TMP_ArrayObjectPool<T> where T : new()
+    internal class TMP_ArrayObjectPool<T>
     {
+        /// <summary>
+        /// 是否正在使用对象池,后续增加释放机制时使用
+        /// </summary>
+        private bool m_IsUsingPool = true;
         private readonly Dictionary<int, Stack<T[]>> m_StackDic = new Dictionary<int, Stack<T[]>>();
         private readonly UnityAction<T[]> m_ActionOnGet;
         private readonly UnityAction<T[]> m_ActionOnRelease;
@@ -79,29 +83,44 @@ namespace TMPro
         public T[] Get(int count)
         {
             T[] element;
-            if(m_StackDic.TryGetValue(count, out Stack<T[]> stack) == false)
+            if (m_IsUsingPool)
             {
-                stack = new Stack<T[]>();
-                m_StackDic[count] = stack;
-            }
-            if (stack.Count == 0)
-            {
-                element = new T[count];
-                countAll++;
+                if (m_StackDic.TryGetValue(count, out Stack<T[]> stack) == false)
+                {
+                    stack = new Stack<T[]>();
+                    m_StackDic[count] = stack;
+                }
+
+                if (stack.Count == 0)
+                {
+                    UnityEngine.Profiling.Profiler.BeginSample("TMP_ArrayObjectPool new T");
+                    element = new T[count];
+                    countAll++;
+                    UnityEngine.Profiling.Profiler.EndSample();
+                }
+                else
+                {
+                    element = stack.Pop();
+                }
+                if (m_ActionOnGet != null)
+                    m_ActionOnGet(element);
             }
             else
             {
-                element = stack.Pop();
+                element = new T[count];
             }
-            if (m_ActionOnGet != null)
-                m_ActionOnGet(element);
             return element;
         }
 
         public void Release(int count, T[] element)
         {
-            if(m_StackDic.TryGetValue(count, out Stack<T[]> stack))
+            if (m_IsUsingPool)
             {
+                if (m_StackDic.TryGetValue(count, out Stack<T[]> stack) == false)
+                {
+                    stack = new Stack<T[]>();
+                    m_StackDic[count] = stack;
+                }
                 if (stack.Count > 0 && ReferenceEquals(stack.Peek(), element))
                     Debug.LogErrorFormat("Internal error. Trying to destroy object that is already released to pool. count = {0}", count.ToString());
                 if (m_ActionOnRelease != null)
@@ -110,7 +129,7 @@ namespace TMPro
             }
             else
             {
-                Debug.LogErrorFormat("Internal error. Trying to destroy object that is already released to pool. count = {0}", count.ToString());
+
             }
         }
     }
