@@ -787,7 +787,14 @@ namespace TMPro
             int materialCount = m_textInfo.materialCount;
 
             if (m_fontSharedMaterials == null)
+            {
+#if TMP_USE_POOL
+                TMP_ArrayPool<Material>.Release(m_fontSharedMaterials);
+                m_fontSharedMaterials = TMP_ArrayPool<Material>.Get(materialCount);
+#else
                 m_fontSharedMaterials = new Material[materialCount];
+#endif
+            }
             else if (m_fontSharedMaterials.Length != materialCount)
                 TMP_TextInfo.Resize(ref m_fontSharedMaterials, materialCount, false);
 
@@ -812,7 +819,14 @@ namespace TMPro
 
             // Check allocation of the fontSharedMaterials array.
             if (m_fontSharedMaterials == null)
+            {
+#if TMP_USE_POOL
+                TMP_ArrayPool<Material>.Release(m_fontSharedMaterials);
+                m_fontSharedMaterials = TMP_ArrayPool<Material>.Get(materialCount);
+#else
                 m_fontSharedMaterials = new Material[materialCount];
+#endif
+            }
             else if (m_fontSharedMaterials.Length != materialCount)
                 TMP_TextInfo.Resize(ref m_fontSharedMaterials, materialCount, false);
 
