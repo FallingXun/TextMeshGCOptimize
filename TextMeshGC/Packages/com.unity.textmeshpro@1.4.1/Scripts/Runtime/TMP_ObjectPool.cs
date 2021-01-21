@@ -93,10 +93,8 @@ namespace TMPro
 
                 if (stack.Count == 0)
                 {
-                    UnityEngine.Profiling.Profiler.BeginSample("TMP_ArrayObjectPool new T");
                     element = new T[count];
                     countAll++;
-                    UnityEngine.Profiling.Profiler.EndSample();
                 }
                 else
                 {
