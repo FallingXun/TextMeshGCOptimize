@@ -5,7 +5,7 @@ TextMesh堆内存优化
 TextMeshPro(TMP)是Unity的字体插件，具有很强大的功能，然而使用的过程中会发现堆内存的申请频率和大小都不低，尤其是在UI界面的使用上，每次打开界面，都会使得界面上的TMP进行初始化，随着使用时长的增加，就容易引起GC。（当前版本 com.unity.textmeshpro@1.4.1）
 
 ### 问题分析
-![image](https://github.com/FallingXun/TextMeshGCOptimize/blob/main/Images/1.png)
+![image](https://github.com/FallingXun/TextMeshGCOptimize/blob/main/Images/1.png)  
 创建50个TMP文本时，会有1.1MB的堆内存申请，从图中可以看出：   
 1. Object.Instantiate()：0.8MB   
 - TextMeshProUGUI..ctor: 301.2KB   
