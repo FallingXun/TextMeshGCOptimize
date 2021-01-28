@@ -26,7 +26,7 @@ TMP中有对象池的模式，TMP_ListPool中，提供了List<T>的对象池结�
 
 由于保持了原有的数组的模式，所以对原逻辑的修改将会降到最小，只需将new Array的地方改为对象池即可。如：
 - 修改前：characterInfo = new TMP_CharacterInfo[8];
-- 修改后：TMP_ArrayPool<TMP_CharacterInfo>.Release(characterInfo);
+- 修改后：TMP_ArrayPool<TMP_CharacterInfo>.Release(characterInfo);   
             characterInfo = TMP_ArrayPool<TMP_CharacterInfo>.Get(8);
 
 先回收原有的数组，再从池里提取新的长度的对象。每次提取前先释放，为了避免出现数组没回池。例如 TMP 中原本存在的问题：  
